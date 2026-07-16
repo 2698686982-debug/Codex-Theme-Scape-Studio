@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Dream Skin Studio"
+  short_description: "Switch 20 built-in themes or add a personal-image macOS Codex theme"
+  default_prompt: "Use $codex-dream-skin-studio to install, switch, customize, verify, or restore my macOS Codex themes without modifying the official app. Keep the permanent system-default entry and Naruto as built-in theme 2."

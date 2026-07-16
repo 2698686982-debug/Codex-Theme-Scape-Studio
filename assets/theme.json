@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "portal-demo",
+  "layoutVariant": "cinematic-banner",
+  "name": "瑞克与莫蒂 · 多元宇宙开发站",
+  "brandSubtitle": "CODEX PORTAL EDITION",
+  "tagline": "穿过传送门，把疯狂想法写成可运行的代码。",
+  "projectPrefix": "选择宇宙 / 项目 · ",
+  "projectLabel": "◉  选择宇宙 / 项目",
+  "statusText": "PORTAL ONLINE",
+  "quote": "Wubba Lubba Dub-Dub!",
+  "image": "portal-hero.png",
+  "colors": {
+    "background": "#071116",
+    "panel": "#0b1a20",
+    "panelAlt": "#10272c",
+    "accent": "#7cff46",
+    "accentAlt": "#b8ff3d",
+    "secondary": "#36d7e8",
+    "highlight": "#642a8c",
+    "text": "#e9fff1",
+    "muted": "#9ebdb3",
+    "line": "rgba(124, 255, 70, .28)"
+  }
+}
