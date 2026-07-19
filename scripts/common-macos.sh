@@ -32,7 +32,7 @@ LEGACY_REPAIR_JOB_LABEL="com.openai.codex-dream-skin-studio.repair"
 INJECTOR_PLIST="$HOME/Library/LaunchAgents/$INJECTOR_JOB_LABEL.plist"
 WATCHDOG_PLIST="$HOME/Library/LaunchAgents/$WATCHDOG_JOB_LABEL.plist"
 EXPECTED_CODEX_TEAM_ID="${CODEX_EXPECTED_TEAM_ID:-2DC432GLL2}"
-SKIN_VERSION="2.7.0"
+SKIN_VERSION="2.10.12"
 
 fail() {
   local message="$*"

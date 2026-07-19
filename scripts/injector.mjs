@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
-const SKIN_VERSION = "2.7.0";
+const SKIN_VERSION = "2.10.12";
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
 const MAX_ART_BYTES = 16 * 1024 * 1024;
 const BUILTIN_THEME_COUNT = 20;
@@ -13,12 +13,18 @@ const LAYOUT_VARIANTS = new Set([
   "immersive-board",
   "terminal-grid",
   "orbital-command",
+  "china-workbench",
+  "executive-stage",
+  "sitcom-cosmos",
+  "portal-episode",
+  "mystery-mansion",
+  "time-machine",
   "editorial-split",
   "minimal-focus",
 ]);
 const EFFECT_TYPES = new Set([
-  "portal-sparks", "ninja-storm", "orbital-scan", "abyss-bubbles", "sakura-petals",
-  "neon-rain", "star-warp", "ink-mist", "aurora-ribbons", "dune-dust",
+  "portal-sparks", "ninja-storm", "orbital-scan", "red-gold-stream", "executive-spotlight",
+  "family-cosmic-drift", "family-portals", "family-storm", "family-timewarp", "dune-dust",
   "glacier-snow", "synth-lasers", "forest-fireflies", "forge-embers", "steam-cogs",
   "candy-confetti", "matrix-rain", "coast-glitter", "moon-meteors", "silver-grain",
 ]);
@@ -33,6 +39,7 @@ function parseArgs(argv) {
     themeDir: null,
     themeId: null,
     openThemePicker: false,
+    screenshotDir: null,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -45,12 +52,14 @@ function parseArgs(argv) {
     else if (arg === "--test-theme-studio") options.mode = "studio-test";
     else if (arg === "--test-all-effects") options.mode = "effects-test";
     else if (arg === "--test-reduced-motion") options.mode = "reduced-motion-test";
+    else if (arg === "--test-home-composer") options.mode = "composer-test";
     else if (arg === "--go-home") options.mode = "home";
     else if (arg === "--go-back") options.mode = "back";
     else if (arg === "--preview-theme-studio") options.mode = "studio-preview";
     else if (arg === "--select-theme") { options.mode = "select"; options.themeId = argv[++i]; }
     else if (arg === "--timeout-ms") options.timeoutMs = Number(argv[++i]);
     else if (arg === "--screenshot") options.screenshot = path.resolve(argv[++i]);
+    else if (arg === "--screenshot-dir") options.screenshotDir = path.resolve(argv[++i]);
     else if (arg === "--theme-dir") options.themeDir = path.resolve(argv[++i]);
     else if (arg === "--reload") options.reload = true;
     else if (arg === "--open-theme-picker") options.openThemePicker = true;
@@ -64,6 +73,9 @@ function parseArgs(argv) {
   }
   if (options.mode === "select" && !/^[a-z0-9][a-z0-9-]{0,79}$/i.test(options.themeId || "")) {
     throw new Error(`Invalid theme id: ${options.themeId || "missing"}`);
+  }
+  if (options.mode === "composer-test" && !options.screenshotDir) {
+    throw new Error("--test-home-composer requires --screenshot-dir");
   }
   return options;
 }
@@ -382,8 +394,10 @@ async function loadBuiltInThemes() {
     imageBytes += loaded.imageBytes;
     themes.push({ ...theme, artDataUrl: loaded.artDataUrl, index: index + 1 });
   }
-  if (themes[0]?.id !== "portal-demo" || themes[1]?.id !== "naruto" || themes[2]?.id !== "gundam-orbital") {
-    throw new Error("Built-in theme order must start with portal-demo, naruto, and gundam-orbital");
+  if (themes[0]?.id !== "portal-demo" || themes[1]?.id !== "naruto" || themes[2]?.id !== "gundam-orbital" ||
+      themes[5]?.id !== "family-cosmic" || themes[6]?.id !== "family-multiverse" ||
+      themes[7]?.id !== "family-mystery" || themes[8]?.id !== "family-time-travel") {
+    throw new Error("Built-in theme order must retain core slots 1–3 and Family episode slots 6–9");
   }
   if (themes.some((theme) => !EFFECT_TYPES.has(theme.effect)) ||
       new Set(themes.map((theme) => theme.effect)).size !== BUILTIN_THEME_COUNT) {
@@ -439,8 +453,38 @@ async function loadPayload(themeDir) {
   };
 }
 
+async function collectPayloadInputState(directory, label) {
+  let entries;
+  try {
+    entries = await fs.readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    throw error;
+  }
+  const state = [];
+  entries.sort((first, second) => first.name.localeCompare(second.name));
+  for (const entry of entries) {
+    if (entry.name === ".DS_Store" || entry.isSymbolicLink()) continue;
+    const absolute = path.join(directory, entry.name);
+    const relative = `${label}/${entry.name}`;
+    if (entry.isDirectory()) {
+      state.push(...await collectPayloadInputState(absolute, relative));
+    } else if (entry.isFile()) {
+      const stat = await fs.stat(absolute);
+      state.push(`${relative}:${stat.size}:${stat.mtimeMs}:${stat.ctimeMs}`);
+    }
+  }
+  return state;
+}
+
+async function payloadFingerprint(themeDir) {
+  const state = await collectPayloadInputState(path.join(root, "assets"), "assets");
+  if (themeDir) state.push(...await collectPayloadInputState(themeDir, "theme"));
+  return state.join("\n");
+}
+
 async function applyToSession(session, payload) {
-  return session.evaluate(payload);
+  return session.evaluate(payload, 120000);
 }
 
 async function selectThemeInSession(session, themeId) {
@@ -453,7 +497,7 @@ async function selectThemeInSession(session, themeId) {
       return state?.themeId === ${JSON.stringify(themeId)};
     }
     return typeof state?.setActiveTheme === 'function' && state.setActiveTheme(${JSON.stringify(themeId)}, true);
-  })()`);
+  })()`, 30000);
   if (!selected) throw new Error(`Theme is unavailable in the live renderer: ${themeId}`);
 }
 
@@ -474,13 +518,13 @@ async function navigateHomeInSession(session) {
     };
     target.click();
     return { clicked: true };
-  })()`);
+  })()`, 30000);
   if (!navigation?.clicked) throw new Error(`Could not find the native Codex home control: ${JSON.stringify(navigation?.candidates || [])}`);
   await new Promise((resolve) => setTimeout(resolve, 900));
 }
 
 async function navigateBackInSession(session) {
-  await session.evaluate(`(() => { history.back(); return true; })()`);
+  await session.evaluate(`(() => { history.back(); return true; })()`, 30000);
   await new Promise((resolve) => setTimeout(resolve, 900));
 }
 
@@ -538,14 +582,44 @@ async function verifySession(session, allowStartupFrame = false) {
     const heroWallpaper = heroElement?.querySelector(':scope > .dream-skin-hero-wallpaper') ?? null;
     const heroArt = heroWallpaper?.querySelector('.dream-skin-hero-art') ?? null;
     const heroEffect = heroWallpaper?.querySelector('.dream-skin-hero-fx .dream-skin-fx-field') ?? null;
-    const projectButton = box(home?.querySelector('.group\\\\/project-selector > button'));
+    const projectButton = box(home?.querySelector('[class~="group/project-selector"] > button'));
     const projectPanel = box(home?.querySelector('div:has(> .horizontal-scroll-fade-mask [class~="group/project-selector"])'));
     const composer = box(document.querySelector('.composer-surface-chrome'));
     const sidebar = box(document.querySelector('aside.app-shell-left-panel'));
     const mainSurface = document.querySelector('main.main-surface');
     const mainSurfaceStyle = getComputedStyle(mainSurface || document.body);
     const taskArtStyle = mainSurface ? getComputedStyle(mainSurface, '::before') : null;
+    const taskOverlayStyle = mainSurface ? getComputedStyle(mainSurface, '::after') : null;
+    const taskTextNode = home ? null : [...document.querySelectorAll('[class*="_markdownText_"]')].find((node) => {
+      const rect = node.getBoundingClientRect();
+      const style = getComputedStyle(node);
+      return (node.textContent || '').trim() && rect.bottom > 48 && rect.top < innerHeight - 180 &&
+        rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+    }) ?? null;
+    const taskTextColor = taskTextNode ? getComputedStyle(taskTextNode).color : null;
+    const taskTextRgb = taskTextColor?.match(/[\\d.]+/g)?.slice(0, 3).map(Number) ?? [];
+    const themeBackground = getComputedStyle(document.documentElement).getPropertyValue('--ds-bg').trim();
+    const themeBackgroundMatch = themeBackground.match(/^#([0-9a-f]{6})$/i);
+    const themeBackgroundRgb = themeBackgroundMatch
+      ? [1, 3, 5].map(index => parseInt(themeBackgroundMatch[1].slice(index - 1, index + 1), 16))
+      : [];
+    const luminance = (rgb) => {
+      if (rgb.length !== 3) return null;
+      const values = rgb.map(value => {
+        const channel = value / 255;
+        return channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4;
+      });
+      return .2126 * values[0] + .7152 * values[1] + .0722 * values[2];
+    };
+    const textLuminance = luminance(taskTextRgb);
+    const backgroundLuminance = luminance(themeBackgroundRgb);
+    const taskTextContrast = textLuminance == null || backgroundLuminance == null ? null
+      : (Math.max(textLuminance, backgroundLuminance) + .05) /
+        (Math.min(textLuminance, backgroundLuminance) + .05);
     const chrome = document.getElementById('codex-dream-skin-chrome');
+    const quote = chrome?.querySelector('.dream-skin-quote') ?? null;
+    const quoteStyle = quote ? getComputedStyle(quote) : null;
+    const quoteBeforeStyle = quote ? getComputedStyle(quote, '::before') : null;
     const viewportEffect = chrome?.querySelector('.dream-skin-viewport-fx .dream-skin-fx-field') ?? null;
     const picker = document.getElementById('codex-dream-skin-theme-picker');
     const pickerTrigger = box(picker?.querySelector('.dream-skin-theme-trigger'));
@@ -580,6 +654,19 @@ async function verifySession(session, allowStartupFrame = false) {
       stylePresent: Boolean(document.getElementById('codex-dream-skin-style')),
       chromePresent: Boolean(chrome),
       chromePointerEvents: getComputedStyle(chrome || document.body).pointerEvents,
+      taskQuote: {
+        text: quote?.textContent?.trim() ?? null,
+        chromeContent: quoteBeforeStyle?.content ?? null,
+        backgroundContent: taskOverlayStyle?.content ?? null,
+        visible: Boolean(box(quote)?.visible) && Number(quoteStyle?.opacity ?? 0) > 0,
+        fontFamily: taskOverlayStyle?.fontFamily ?? null,
+        fontSize: taskOverlayStyle?.fontSize ?? null,
+        letterSpacing: taskOverlayStyle?.letterSpacing ?? null,
+        color: taskOverlayStyle?.color ?? null,
+        layerZIndex: taskOverlayStyle?.zIndex ?? null,
+        layerPointerEvents: taskOverlayStyle?.pointerEvents ?? null,
+        rect: box(quote),
+      },
       pickerPresent: Boolean(picker),
       pickerTrigger,
       pickerPointerEvents: getComputedStyle(picker || document.body).pointerEvents,
@@ -619,8 +706,14 @@ async function verifySession(session, allowStartupFrame = false) {
             (composer.x + composer.width)) <= 4 &&
           Math.abs(projectPanel.x - composer.x) <= 4 &&
           Math.abs((projectPanel.x + projectPanel.width) - (composer.x + composer.width)) <= 4,
+        heroToCardsGap: hero && visibleMissionCards.length
+          ? Math.round(Math.min(...visibleMissionCards.map((item) => item.y)) - (hero.y + hero.height))
+          : null,
         cardsToProjectPanelGap: projectPanel && visibleMissionCards.length
           ? Math.round(projectPanel.y - Math.max(...visibleMissionCards.map((item) => item.y + item.height)))
+          : null,
+        projectToComposerGap: projectPanel && composer
+          ? Math.round(composer.y - (projectPanel.y + projectPanel.height))
           : null,
         projectGap: projectButton && visibleMissionCards.length
           ? Math.round(projectButton.y - Math.max(...visibleMissionCards.map((item) => item.y + item.height)))
@@ -659,6 +752,12 @@ async function verifySession(session, allowStartupFrame = false) {
         position: taskArtStyle?.backgroundPosition ?? mainSurfaceStyle.backgroundPosition,
         fullBleed: (taskArtStyle?.backgroundSize ?? '').split(',').at(-1)?.trim() === 'cover',
       },
+      taskForeground: {
+        sampleVisible: Boolean(taskTextNode),
+        color: taskTextColor,
+        contrast: taskTextContrast == null ? null : Number(taskTextContrast.toFixed(2)),
+        readable: !taskTextNode || (taskTextContrast != null && taskTextContrast >= 4.5),
+      },
       viewport: { width: innerWidth, height: innerHeight },
       documentOverflow: {
         x: document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -690,15 +789,40 @@ async function verifySession(session, allowStartupFrame = false) {
       result.orbitalCommand.cardsToProjectPanelGap <= 80 &&
       result.orbitalCommand.projectGap >= 0 && result.orbitalCommand.projectGap <= 120
     );
-    const taskBackgroundPass = result.homeRoute || result.taskBackground.fullBleed;
+    const chinaWorkbenchPass = result.themeId !== 'china-red-gold' || !result.homeRoute || innerWidth < 1120 || (
+      result.layoutVariant === 'china-workbench' && result.orbitalCommand.cardCount === 4 &&
+      result.orbitalCommand.singleRow && result.orbitalCommand.deckAligned &&
+      result.hero.width >= Math.min(1180, innerWidth - 280) &&
+      result.orbitalCommand.heroToCardsGap >= 28 && result.orbitalCommand.heroToCardsGap <= 56 &&
+      result.orbitalCommand.cardsToProjectPanelGap >= 24 &&
+      result.orbitalCommand.cardsToProjectPanelGap <= 64 &&
+      result.orbitalCommand.projectToComposerGap >= 14 &&
+      result.orbitalCommand.projectToComposerGap <= 44
+    );
+    const chinaTaskQuotePass = result.themeId !== 'china-red-gold' || innerWidth < 1120 || (result.homeRoute
+      ? result.taskQuote.text === '为人民服务' && !(result.taskQuote.backgroundContent || '').includes('一颗红心向祖国')
+      : !result.taskQuote.visible &&
+        (result.taskQuote.backgroundContent || '').includes('一颗红心向祖国，一片赤诚为人民') &&
+        result.taskQuote.layerZIndex === '-1' && result.taskQuote.layerPointerEvents === 'none' &&
+        Number((result.taskQuote.color || '').match(/[\\d.]+/g)?.[3] ?? 1) <= .30);
+    const episodeLayouts = {
+      'family-cosmic': 'sitcom-cosmos',
+      'family-multiverse': 'portal-episode',
+      'family-mystery': 'mystery-mansion',
+      'family-time-travel': 'time-machine',
+    };
+    const episodePass = !episodeLayouts[result.themeId] || !result.homeRoute || (
+      result.layoutVariant === episodeLayouts[result.themeId] && result.visibleFallbackActionCount === 4
+    );
+    const taskBackgroundPass = result.homeRoute ||
+      (result.taskBackground.fullBleed && result.taskForeground.readable);
     const homePass = !result.homeRoute || (
       result.homePresent && result.hero?.visible && result.hero.width >= 320 && result.hero.height >= 160 &&
-      ((result.suggestionsPresent && result.visibleCardCount >= 2 && result.visibleCardCount <= 4) ||
-        (!result.suggestionsPresent && result.visibleFallbackActionCount === 4)) &&
+      ((result.visibleCardCount >= 2 && result.visibleCardCount <= 4) || result.visibleFallbackActionCount === 4) &&
       Boolean(result.projectButton?.visible)
     );
     result.pass = Boolean(sharedPass && (result.systemDefault ? systemDefaultPass :
-      themedPass && homePass && orbitalPass && taskBackgroundPass));
+      themedPass && homePass && orbitalPass && chinaWorkbenchPass && chinaTaskQuotePass && episodePass && taskBackgroundPass));
     return result;
   })()`, 120000);
 }
@@ -867,8 +991,9 @@ async function testAllEffectsSession(session) {
           results.push({ themeId, pass: false, error: 'Theme switch failed' });
           continue;
         }
-        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        await wait(90);
+        // Electron may pause requestAnimationFrame while the Codex window is
+        // backgrounded. A bounded timer keeps the release check deterministic.
+        await wait(120);
         const heroArt = document.querySelector('.dream-skin-hero-art');
         const mainSurface = document.querySelector('main.main-surface');
         const effectNode = document.querySelector('.dream-skin-hero-fx .dream-skin-fx-field') ||
@@ -933,6 +1058,224 @@ async function testReducedMotionSession(session) {
   }
 }
 
+async function testHomeComposerSession(session, options) {
+  const pause = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+  const focusComposer = async () => {
+    const focused = await session.evaluate(`(() => {
+      const composer = document.querySelector('.composer-surface-chrome');
+      const editor = composer?.querySelector('textarea, [contenteditable="true"]');
+      if (!editor) return false;
+      editor.focus();
+      if (editor.isContentEditable) {
+        const selection = getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(editor);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      return true;
+    })()`);
+    if (!focused) throw new Error("Could not focus the native Codex composer");
+  };
+  const clearComposer = async () => {
+    await focusComposer();
+    await session.send("Input.dispatchKeyEvent", {
+      type: "keyDown", key: "a", code: "KeyA", modifiers: 4,
+      windowsVirtualKeyCode: 65, nativeVirtualKeyCode: 0,
+    });
+    await session.send("Input.dispatchKeyEvent", {
+      type: "keyUp", key: "a", code: "KeyA", modifiers: 4,
+      windowsVirtualKeyCode: 65, nativeVirtualKeyCode: 0,
+    });
+    await session.send("Input.dispatchKeyEvent", {
+      type: "keyDown", key: "Backspace", code: "Backspace",
+      windowsVirtualKeyCode: 8, nativeVirtualKeyCode: 51,
+    });
+    await session.send("Input.dispatchKeyEvent", {
+      type: "keyUp", key: "Backspace", code: "Backspace",
+      windowsVirtualKeyCode: 8, nativeVirtualKeyCode: 51,
+    });
+    await pause(380);
+  };
+  const insertLineBreak = async () => {
+    await session.send("Input.dispatchKeyEvent", {
+      type: "keyDown", key: "Enter", code: "Enter", modifiers: 8,
+      windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 36,
+    });
+    await session.send("Input.dispatchKeyEvent", {
+      type: "keyUp", key: "Enter", code: "Enter", modifiers: 8,
+      windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 36,
+    });
+  };
+  const measure = (label) => session.evaluate(`(() => {
+    const box = (node) => {
+      if (!node) return null;
+      const rect = node.getBoundingClientRect();
+      const style = getComputedStyle(node);
+      return {
+        x: Math.round(rect.x), y: Math.round(rect.y),
+        width: Math.round(rect.width), height: Math.round(rect.height),
+        bottom: Math.round(rect.bottom),
+        visible: rect.width > 0 && rect.height > 0 && style.display !== 'none' &&
+          style.visibility !== 'hidden' && Number(style.opacity) > 0,
+      };
+    };
+    const home = document.querySelector('[role="main"].dream-skin-home');
+    const composer = document.querySelector('.composer-surface-chrome');
+    const editor = composer?.querySelector('textarea, [contenteditable="true"]');
+    const projectPanel = home?.querySelector('div:has(> .horizontal-scroll-fade-mask [class~="group/project-selector"])');
+    const projectButton = home?.querySelector('[class~="group/project-selector"] > button');
+    const motionWrapper = home?.querySelector('div[class~="z-0"][class~="absolute"][class~="top-full"]:has([class~="group/project-selector"])');
+    const hero = home?.firstElementChild?.firstElementChild?.firstElementChild ?? null;
+    const nativeCardNodes = [...(home?.querySelectorAll('[class~="group/home-suggestions"] button') ?? [])]
+      .filter((node) => box(node)?.visible);
+    const fallbackCardNodes = [...document.querySelectorAll('#codex-dream-skin-chrome .dream-skin-fallback-actions button')]
+      .filter((node) => box(node)?.visible);
+    const missionCardNodes = nativeCardNodes.length >= 2 ? nativeCardNodes : fallbackCardNodes;
+    const missionCards = missionCardNodes.map(box);
+    const partyBadges = missionCardNodes.map((button) => {
+      const icon = button.querySelector('i') || button.querySelector(':scope > span:first-child > span:first-child');
+      const style = icon ? getComputedStyle(icon, '::after') : null;
+      return {
+        content: style?.content ?? null,
+        color: style?.color ?? null,
+        fontSize: style?.fontSize ?? null,
+        visible: Boolean(box(icon)?.visible),
+      };
+    });
+    const heroBox = box(hero);
+    const projectBox = box(projectPanel);
+    const composerBox = box(composer);
+    const wrapperStyle = motionWrapper ? getComputedStyle(motionWrapper) : null;
+    const draft = editor instanceof HTMLTextAreaElement ? editor.value : (editor?.innerText || '').replace(/\u00a0/g, ' ').trim();
+    const ancestorChain = (node) => {
+      const chain = [];
+      for (let current = node; current && chain.length < 10; current = current.parentElement) {
+        const rect = current.getBoundingClientRect();
+        const style = getComputedStyle(current);
+        chain.push({
+          tag: current.tagName.toLowerCase(),
+          id: current.id || null,
+          className: typeof current.className === 'string' ? current.className : null,
+          role: current.getAttribute('role'),
+          x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height),
+          position: style.position,
+          opacity: style.opacity,
+          transform: style.transform,
+          transitionDuration: style.transitionDuration,
+          animationName: style.animationName,
+        });
+        if (current === home) break;
+      }
+      return chain;
+    };
+    const result = {
+      label: ${JSON.stringify(label)},
+      themeId: window.__CODEX_DREAM_SKIN_STATE__?.themeId ?? null,
+      homePresent: Boolean(home),
+      draft,
+      hero: heroBox,
+      missionCards,
+      missionCardCount: missionCards.length,
+      partyBadges,
+      partyBadgeCount: partyBadges.filter((badge) => badge.visible && badge.content?.includes('☭') &&
+        parseFloat(badge.fontSize || '0') >= 28 && badge.color !== 'rgba(0, 0, 0, 0)').length,
+      heroToCardsGap: heroBox && missionCards.length
+        ? Math.round(Math.min(...missionCards.map((item) => item.y)) - heroBox.bottom)
+        : null,
+      cardsToProjectGap: projectBox && missionCards.length
+        ? Math.round(projectBox.y - Math.max(...missionCards.map((item) => item.bottom)))
+        : null,
+      projectPanel: projectBox,
+      projectButton: box(projectButton),
+      composer: composerBox,
+      projectToComposerGap: projectBox && composerBox ? composerBox.y - projectBox.bottom : null,
+      motionWrapper: {
+        present: Boolean(motionWrapper),
+        opacity: wrapperStyle?.opacity ?? null,
+        transform: wrapperStyle?.transform ?? null,
+        transitionDuration: wrapperStyle?.transitionDuration ?? null,
+        animationName: wrapperStyle?.animationName ?? null,
+      },
+      structure: ${JSON.stringify(label)} === 'empty' ? {
+        projectAncestors: ancestorChain(projectButton),
+        composerAncestors: ancestorChain(composer),
+      } : null,
+      documentOverflow: {
+        x: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        y: document.documentElement.scrollHeight > document.documentElement.clientHeight,
+      },
+    };
+    result.pass = result.themeId === 'china-red-gold' && result.homePresent &&
+      result.missionCardCount === 4 && result.partyBadgeCount === 4 &&
+      result.heroToCardsGap >= 28 && result.heroToCardsGap <= 64 &&
+      result.cardsToProjectGap >= 24 && result.cardsToProjectGap <= 72 &&
+      result.projectPanel?.visible && result.projectButton?.visible && result.composer?.visible &&
+      result.projectToComposerGap >= 14 && !result.documentOverflow.x && !result.documentOverflow.y &&
+      result.motionWrapper.present && Number(result.motionWrapper.opacity) === 1 &&
+      result.motionWrapper.transform === 'none' && result.motionWrapper.animationName === 'none';
+    return result;
+  })()`, 30000);
+
+  await selectThemeInSession(session, "china-red-gold");
+  await navigateHomeInSession(session);
+  const deadline = Date.now() + options.timeoutMs;
+  while (Date.now() < deadline) {
+    const ready = await session.evaluate(`Boolean(document.querySelector('[role="main"].dream-skin-home .composer-surface-chrome, [role="main"].dream-skin-home') && document.querySelector('.composer-surface-chrome'))`);
+    if (ready) break;
+    await pause(250);
+  }
+
+  await clearComposer();
+  const empty = await measure("empty");
+  await capture(session, path.join(options.screenshotDir, "home-composer-empty.png"), false);
+
+  const singleText = "输入排版回归：项目栏和输入框保持独立间距";
+  await focusComposer();
+  await session.send("Input.insertText", { text: singleText });
+  await pause(520);
+  const singleLine = await measure("single-line");
+  await capture(session, path.join(options.screenshotDir, "home-composer-single-line.png"), false);
+
+  await clearComposer();
+  const multilineText = [
+    "第一行：服务真实需求",
+    "第二行：建设自主创新项目",
+    "第三行：审查安全与责任",
+    "第四行：解决一线实际问题",
+    "第五行：保持原生输入交互",
+  ];
+  await focusComposer();
+  for (let index = 0; index < multilineText.length; index += 1) {
+    if (index > 0) await insertLineBreak();
+    await session.send("Input.insertText", { text: multilineText[index] });
+  }
+  await pause(620);
+  const multiline = await measure("five-lines");
+  await capture(session, path.join(options.screenshotDir, "home-composer-five-lines.png"), false);
+
+  await clearComposer();
+  await session.evaluate(`(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); return true; })()`);
+  await pause(420);
+  const restoredEmpty = await measure("restored-empty");
+  const inputStatePass = empty.draft === "" && singleLine.draft.includes(singleText) &&
+    multiline.draft.includes(multilineText[0]) && multiline.draft.includes(multilineText[4]) &&
+    multiline.composer?.height > singleLine.composer?.height && restoredEmpty.draft === "";
+  const report = {
+    pass: inputStatePass && [empty, singleLine, multiline, restoredEmpty].every((stage) => stage.pass),
+    screenshots: {
+      empty: path.join(options.screenshotDir, "home-composer-empty.png"),
+      singleLine: path.join(options.screenshotDir, "home-composer-single-line.png"),
+      fiveLines: path.join(options.screenshotDir, "home-composer-five-lines.png"),
+    },
+    stages: [empty, singleLine, multiline, restoredEmpty],
+  };
+  await fs.mkdir(options.screenshotDir, { recursive: true });
+  await fs.writeFile(path.join(options.screenshotDir, "home-composer-regression.json"), `${JSON.stringify(report, null, 2)}\n`);
+  return report;
+}
+
 async function waitForVerifiedSession(session, timeoutMs, allowStartupFrame = false) {
   const deadline = Date.now() + timeoutMs;
   let lastResult;
@@ -946,18 +1289,33 @@ async function waitForVerifiedSession(session, timeoutMs, allowStartupFrame = fa
 
 async function capture(session, outputPath, dismissOverlays = true) {
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
+  try {
+    await session.send("Page.bringToFront");
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+  } catch { /* A backgrounded compositor can still produce a valid capture. */ }
   if (dismissOverlays) {
-    await session.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
-    await session.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+    try {
+      await session.evaluate(`(() => {
+        const trigger = document.querySelector('#codex-dream-skin-theme-picker .dream-skin-theme-trigger');
+        if (trigger?.getAttribute('aria-expanded') === 'true') trigger.click();
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+        return true;
+      })()`);
+    } catch { /* Screenshot cleanup is best-effort; verification remains strict. */ }
   }
-  const viewport = await session.evaluate("({ width: innerWidth, height: innerHeight })");
-  await session.send("Input.dispatchMouseEvent", {
-    type: "mouseMoved",
-    x: Math.round(viewport.width * 0.64),
-    y: Math.round(viewport.height * 0.62),
-    button: "none",
-  });
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  const viewport = await session.evaluate("({ width: innerWidth, height: innerHeight })", 30000);
+  try {
+    await session.send("Input.dispatchMouseEvent", {
+      type: "mouseMoved",
+      x: Math.max(1, viewport.width - 24),
+      y: Math.max(1, viewport.height - 24),
+      button: "none",
+    });
+  } catch { /* A busy renderer must not invalidate an otherwise valid capture. */ }
+  // Native sidebar task previews linger briefly after the pointer leaves.
+  // Give their exit transition time to finish so acceptance captures show the
+  // workbench itself rather than an unrelated hover card.
+  await new Promise((resolve) => setTimeout(resolve, 900));
   let result;
   let lastError;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
@@ -979,7 +1337,9 @@ async function capture(session, outputPath, dismissOverlays = true) {
 
 async function runOneShot(options) {
   const connected = await connectCodexTargets(options.port, options.timeoutMs);
-  const loaded = (options.mode === "once" || options.reload) ? await loadPayload(options.themeDir) : null;
+  const loaded = (options.mode === "once" || options.mode === "composer-test" || options.reload)
+    ? await loadPayload(options.themeDir)
+    : null;
   const payload = loaded?.payload ?? null;
   const results = [];
   let screenshotCaptured = false;
@@ -988,6 +1348,7 @@ async function runOneShot(options) {
     try {
       if (options.mode === "remove") await removeFromSession(session);
       else if (options.mode === "once") await applyToSession(session, payload);
+      else if (options.mode === "composer-test") await applyToSession(session, payload);
       else if (options.mode === "select") await selectThemeInSession(session, options.themeId);
       else if (options.mode === "home") await navigateHomeInSession(session);
       else if (options.mode === "back") await navigateBackInSession(session);
@@ -1005,8 +1366,10 @@ async function runOneShot(options) {
           ? await testThemeStudioSession(session, options.mode === "studio-preview")
           : options.mode === "effects-test"
             ? await testAllEffectsSession(session)
-            : options.mode === "reduced-motion-test"
+          : options.mode === "reduced-motion-test"
               ? await testReducedMotionSession(session)
+            : options.mode === "composer-test"
+              ? await testHomeComposerSession(session, options)
           : await waitForVerifiedSession(session, options.timeoutMs, options.reload);
       results.push({ targetId: target.id, title: target.title, url: target.url, probe, result });
 
@@ -1034,7 +1397,9 @@ async function runOneShot(options) {
 }
 
 async function runWatch(options) {
-  const { payload } = await loadPayload(options.themeDir);
+  let { payload } = await loadPayload(options.themeDir);
+  let fingerprint = await payloadFingerprint(options.themeDir);
+  let lastPayloadCheck = 0;
   const sessions = new Map();
   const rejected = new Set();
   let stopping = false;
@@ -1043,6 +1408,31 @@ async function runWatch(options) {
   process.on("SIGTERM", stop);
 
   while (!stopping) {
+    if (Date.now() - lastPayloadCheck >= 2000) {
+      lastPayloadCheck = Date.now();
+      try {
+        const nextFingerprint = await payloadFingerprint(options.themeDir);
+        if (nextFingerprint !== fingerprint) {
+          const loaded = await loadPayload(options.themeDir);
+          payload = loaded.payload;
+          fingerprint = nextFingerprint;
+          for (const [id, session] of sessions) {
+            if (session.closed) continue;
+            try {
+              await applyToSession(session, payload);
+            } catch (error) {
+              console.error(`[dream-skin] live payload refresh failed for ${id}: ${error.message}`);
+              session.close();
+              sessions.delete(id);
+            }
+          }
+          console.log(`[dream-skin] reloaded theme payload ${SKIN_VERSION} after local resource change`);
+        }
+      } catch (error) {
+        console.error(`[dream-skin] payload reload deferred: ${error.message}`);
+      }
+    }
+
     let targets = [];
     try {
       targets = await listAppTargets(options.port);

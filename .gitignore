@@ -5,6 +5,8 @@ release/
 Codex Dream Skin Verification.png
 docs/screenshots/
 references/acceptance-report-*
+references/acceptance-*/
+assets/china-red-gold-hero.png
 *.zip
 *.rar
 node_modules/

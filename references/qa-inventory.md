@@ -13,8 +13,8 @@
 9. One click changes the banner, task background, colors, labels, status, and quote without a page reload; the selection survives route changes and renderer reloads.
 10. A customer image appears as an additional custom entry and never replaces one of the 20 built-ins.
 11. System default removes the skin root class, theme background, hero, extra actions, and decoration while keeping the picker available; the state survives refresh and can switch back to any theme.
-12. The 20 built-ins use six layout families. Portal is `cinematic-banner`; Naruto is `immersive-board`; Gundam is the independent `orbital-command` composition.
-13. The picker accepts PNG/JPEG/WebP locally, compresses to WebP, extracts a palette, previews four editable colors and six layouts, and persists up to 12 uploaded themes in IndexedDB.
+12. The 20 built-ins use twelve layout families. Portal is `cinematic-banner`; Naruto is `immersive-board`; Gundam is `orbital-command`; slot 4 is `china-workbench`; slot 5 is `executive-stage`; slots 6–9 use `sitcom-cosmos`, `portal-episode`, `mystery-mansion`, and `time-machine`.
+13. The picker accepts PNG/JPEG/WebP locally, compresses to WebP, extracts a palette, previews four editable colors and twelve layouts, and persists up to 12 uploaded themes in IndexedDB.
 14. Deleting an uploaded theme removes its IndexedDB record and card, restores a built-in when necessary, and never changes the 20 built-ins or permanent system-default entry.
 15. Every built-in and uploaded theme uses a non-video dynamic wallpaper layer on both home and task routes; animation never moves native controls or intercepts input.
 16. The 20 built-ins use six layout motion profiles plus 20 unique environmental-effect profiles. Uploaded themes receive a locally selected effect based on palette/layout, and `prefers-reduced-motion: reduce` makes artwork, ambient light, particles, rain, smoke, debris, and scans static.
@@ -29,14 +29,15 @@
 - Official app and internal Node signature, Team ID, architecture, and version validation.
 - Port collision selection and saved-port reuse.
 - PID reuse protection through PID, start time, executable, script path, and command-line matching.
-- Live verification after `Page.reload` returns version `2.7.0` and `pass: true`; verify mode does not inject after reload, so recovery must come from the persistent injector LaunchAgent.
+- Live verification after `Page.reload` returns version `2.10.12` and `pass: true`; verify mode does not inject after reload, so recovery must come from the persistent injector LaunchAgent. The agent hot-reloads changed theme resources, while the watchdog replaces a stale agent when the installed version changes.
 - Verification requires an interactive picker trigger, the permanent system-default card, 20 built-ins, Naruto at index 2, a ready IndexedDB upload studio, a visible composer and sidebar, non-interactive decoration, and no horizontal overflow.
 - Theme Studio self-test generates a local image, verifies WebP compression, four distinct extracted colors, preview, save, `editorial-split` application, running dynamic wallpaper with measurable movement, IndexedDB delete, temporary-card removal, and original-theme restoration.
 - `doctor --require-live` requires both the restart watchdog and persistent injector LaunchAgent to be installed and loaded; installer/start/restore remove the deprecated repair job to prevent launchd retry loops.
 - System-default verification requires `themeId: system-default`, no skin root class, no skin chrome or home decoration, and a visible interactive picker.
 - Strict home verification additionally requires a visible banner of at least 320×160 and a visible project button. When the current Codex build supplies native suggestion cards, two to four must be visible; otherwise all four interactive fallback task cards must be visible.
 - On Gundam at 1120px and wider, strict verification additionally requires `orbital-command`, a four-card asymmetric command deck (one tall left card, two short upper-right cards, and one wide lower-right card), shared outer edges with the project bar/composer, and 16–80px between the deck and project bar.
-- On every themed task route, the independent wallpaper layer must compute to `cover`; a right-side `auto` image no longer passes.
+- Slots 6–9 each require four visible real task controls and distinct geometry: a separate four-card launch deck, an in-poster 2×2 portal selector, an asymmetric evidence board, and an in-poster vertical timeline respectively.
+- On every themed task route, the independent wallpaper layer must compute to `cover`; a right-side `auto` image no longer passes. Any visible native Markdown/table sample must also resolve to a light foreground suitable for the dark full-bleed artwork.
 - Dynamic verification requires the artwork layer itself to have `animation: none` and `transform: none`; it samples the independent `ds-fx-*` layer twice and requires a changed background position or timeline, `animationPlayState: running`, and `pointer-events: none` unless reduced motion is active.
 - `--test-all-effects` switches all 20 built-ins without reload and requires the exact theme/effect mapping, 20 unique effect IDs, fixed artwork, a running and measurably changing independent effect layer, no pointer interception, no horizontal overflow, and restoration of the original theme.
 
