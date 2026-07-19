@@ -27,14 +27,22 @@ fi
 "$NODE" -e '
   const fs = require("node:fs");
   const registry = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-  const allowed = new Set(["cinematic-banner", "immersive-board", "terminal-grid", "orbital-command", "editorial-split", "minimal-focus"]);
+  const allowed = new Set(["cinematic-banner", "immersive-board", "terminal-grid", "orbital-command", "china-workbench", "executive-stage", "sitcom-cosmos", "portal-episode", "mystery-mansion", "time-machine", "editorial-split", "minimal-focus"]);
   const variants = new Set(registry.themes.map(theme => theme.layoutVariant));
   const effects = new Set(registry.themes.map(theme => theme.effect));
   if (registry.themes.length !== 20 || registry.themes[1]?.id !== "naruto" ||
       registry.themes[2]?.id !== "gundam-orbital" ||
       registry.themes[2]?.image !== "mecha-orbital-hero.png" ||
+      registry.themes[3]?.image !== "china-red-gold-hero-v2.png" ||
       registry.themes[1]?.layoutVariant !== "immersive-board" ||
-      registry.themes[2]?.layoutVariant !== "orbital-command" || variants.size !== 6 || effects.size !== 20 ||
+      registry.themes[2]?.layoutVariant !== "orbital-command" ||
+      registry.themes[3]?.id !== "china-red-gold" || registry.themes[3]?.layoutVariant !== "china-workbench" ||
+      registry.themes[4]?.id !== "ai-executive-forum" || registry.themes[4]?.layoutVariant !== "executive-stage" ||
+      registry.themes[5]?.id !== "family-cosmic" || registry.themes[5]?.layoutVariant !== "sitcom-cosmos" || registry.themes[5]?.effect !== "family-cosmic-drift" ||
+      registry.themes[6]?.id !== "family-multiverse" || registry.themes[6]?.layoutVariant !== "portal-episode" || registry.themes[6]?.effect !== "family-portals" ||
+      registry.themes[7]?.id !== "family-mystery" || registry.themes[7]?.layoutVariant !== "mystery-mansion" || registry.themes[7]?.effect !== "family-storm" ||
+      registry.themes[8]?.id !== "family-time-travel" || registry.themes[8]?.layoutVariant !== "time-machine" || registry.themes[8]?.effect !== "family-timewarp" ||
+      variants.size !== 12 || effects.size !== 20 ||
       registry.themes.some(theme => typeof theme.effect !== "string" || !theme.effect) ||
       registry.themes.some(theme => !allowed.has(theme.layoutVariant))) process.exit(1);
 ' "$ROOT/assets/themes.json"
@@ -67,6 +75,17 @@ fi
 if ! /usr/bin/grep -q 'install_watchdog_agent' "$ROOT/scripts/start-dream-skin-macos.sh" ||
    ! /usr/bin/grep -q 'disable_watchdog_agent' "$ROOT/scripts/restore-dream-skin-macos.sh"; then
   printf 'The restart watchdog install/restore lifecycle is incomplete.\n' >&2
+  exit 1
+fi
+if ! /usr/bin/grep -q 'payloadFingerprint' "$ROOT/scripts/injector.mjs" ||
+   ! /usr/bin/grep -q 'detected Dream Skin version change' "$ROOT/scripts/watchdog-dream-skin-macos.sh"; then
+  printf 'Live payload/version refresh recovery is incomplete.\n' >&2
+  exit 1
+fi
+if ! /usr/bin/grep -q -- '--test-home-composer' "$ROOT/scripts/injector.mjs" ||
+   ! /usr/bin/grep -q 'projectToComposerGap >= 14' "$ROOT/scripts/injector.mjs" ||
+   ! /usr/bin/grep -q 'cardsToProjectGap >= 24' "$ROOT/scripts/injector.mjs"; then
+  printf 'The live home composer regression guard is missing.\n' >&2
   exit 1
 fi
 if ! /usr/bin/grep -q 'INJECTOR_PLIST=' "$ROOT/scripts/common-macos.sh" ||
@@ -121,7 +140,16 @@ BACKUP="$TMP/theme-backup.json"
 /usr/bin/grep -q '@keyframes ds-particle-confetti' "$ROOT/assets/dream-skin.css"
 /usr/bin/grep -q 'animation: var(--ds-particle-motion' "$ROOT/assets/dream-skin.css"
 /usr/bin/grep -q 'animation: none;' "$ROOT/assets/dream-skin.css"
-/usr/bin/env -u HOME /bin/bash -c '. "$1/scripts/common-macos.sh"; [ -n "$HOME" ] && [ "$SKIN_VERSION" = "2.7.0" ]' _ "$ROOT"
+/usr/bin/grep -q 'data-thread-find-target="conversation"' "$ROOT/assets/dream-skin.css"
+/usr/bin/grep -q 'data-pip-obstacle="thread-summary-panel"' "$ROOT/assets/dream-skin.css"
+/usr/bin/grep -q 'data-thread-scroll-footer' "$ROOT/assets/dream-skin.css"
+/usr/bin/grep -q 'content: "☭"' "$ROOT/assets/dream-skin.css"
+/usr/bin/grep -q 'content: "一颗红心向祖国，一片赤诚为人民"' "$ROOT/assets/dream-skin.css"
+/usr/bin/grep -q 'main.main-surface:not(.dream-skin-home-shell)::after' "$ROOT/assets/dream-skin.css"
+/usr/bin/grep -q 'color: rgba(143, 21, 26, .28)' "$ROOT/assets/dream-skin.css"
+/usr/bin/grep -q 'partyBadgeCount === 4' "$ROOT/scripts/injector.mjs"
+/usr/bin/grep -Fq 'div[class~="z-0"][class~="absolute"][class~="top-full"]:has([class~="group/project-selector"])' "$ROOT/assets/dream-skin.css"
+/usr/bin/env -u HOME /bin/bash -c '. "$1/scripts/common-macos.sh"; [ -n "$HOME" ] && [ "$SKIN_VERSION" = "2.10.12" ]' _ "$ROOT"
 "$ROOT/scripts/doctor-macos.sh" >/dev/null
 
 printf 'PASS: syntax, payload, in-page studio markers, custom-theme round-trip, config recovery, persistent-agent lifecycle, signature, and doctor checks.\n'

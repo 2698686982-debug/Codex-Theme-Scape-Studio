@@ -1,5 +1,103 @@
 # Changelog
 
+## 2.10.12 — 2026-07-20
+
+- Moved the China task inscription from the fixed chrome overlay into the task surface's `z-index: -1` background layer, so native messages, generated images, attachments, summary panels, and the composer always render above it.
+- Reduced the inscription to 28% vermilion opacity before the existing ambient-layer animation, removed the foreground baseline ornament, and retained the restrained Songti typography and lower-right placement.
+- Extended live checks to require a hidden task-page chrome quote, exact background copy, negative stacking order, click-through behavior, and a maximum 30% text alpha.
+
+## 2.10.11 — 2026-07-20
+
+- Added “一颗红心向祖国，一片赤诚为人民” as a dedicated inscription on the China theme's normal task background while preserving the home-page motto “为人民服务”.
+- Typeset the inscription in restrained Songti with a low-saturation red-to-gold treatment, fine baseline, and compact ceremonial accent; it remains a click-through decorative layer outside the native task content and composer.
+- Extended live verification to check the exact task-page copy, home/task separation, type treatment, lower-right placement, and safe clearance above the composer.
+
+## 2.10.10 — 2026-07-20
+
+- Replaced the China workbench's four generic/native action pictograms with a unified polished hammer-and-sickle emblem treatment across both native suggestion cards and the interactive four-card fallback deck.
+- Added double gold rings, controlled red enamel shading, highlight and inset depth so the party-emblem badges remain crisp instead of reading as rough black glyphs.
+- Added live badge rendering checks alongside the existing empty, one-line, five-line, and cleared-composer regression coverage.
+
+## 2.10.9 — 2026-07-20
+
+- Fixed the China workbench losing its home layout when Codex hides native suggestions after text input; home detection now follows the stable home composer route marker.
+- Moved Codex 26.715's real absolute project-toolbar layer back into the home flex flow, ordered before the composer, and disabled only that layer's focus translation while preserving its buttons and project state.
+- Removed the fallback-card height collapse that placed the composer behind the task deck, and added live empty, one-line, five-line, and cleared-draft screenshot regression coverage.
+
+## 2.10.8 — 2026-07-20
+
+- Rebalanced the China workbench home page with a wider hero and a consistent left/right alignment shared by the hero, mission deck, project panel, and native composer.
+- Added deliberate vertical breathing room between the hero, mission cards, project selector, and composer; the project panel no longer overlaps the composer.
+- Kept the normal task page palette and symbolic red treatment introduced in 2.10.7 unchanged.
+
+## 2.10.7 — 2026-07-20
+
+- 按“红色是政治与文化象征，而非整页具体红色”的反馈重做第 4 套普通任务页配色；主页五星红旗横幅保持不变。
+- 任务工作区改用宣纸暖白、低饱和米金与极淡朱砂光晕，大面积高饱和红色底层全部移除。
+- 红色收敛到五星红旗、主题按钮、细边框、粒子与少量强调元素，保留“人民叙事、庄重感、红旗精神”的抽象表达，同时提升长时间工作的舒适度。
+
+## 2.10.6 — 2026-07-20
+
+- 根据局部放大图继续消除第 4 套任务页底部的笔直拼接线：人物层在素材真实底边之前完成透明羽化，不再显示原图最后一行像素。
+- 将底部红色环境渐变提前至页面约 66% 高度开始介入，跨过人物层交界区连续混色，避免“上方是原画、下方是纯色”的二段式效果。
+- 保持人物、国旗和红金电路主体完整，底部输入区仍使用原生 DOM 与暖白玻璃层。
+
+## 2.10.5 — 2026-07-20
+
+- 将第 4 套任务页拆为两层独立渲染：全高红金环境底色直接铺满任务容器，五人人物原画保留为单独的静态装饰层。
+- 为人物原画恢复宽幅椭圆羽化，但不再裁切环境底色；原画上下边缘柔和融入连续红金背景，消除 2.10.4 实机图中仍可辨认的水平素材边线。
+- 保持人物面积、五星红旗和红金电路的视觉占比，并继续保护左侧正文和底部输入框的可读性。
+
+## 2.10.4 — 2026-07-20
+
+- 修复第 4 套任务页人物画面与上下暖白区域分层明显的问题：将纵向椭圆遮罩改为只控制左右过渡的横向渐隐，避免素材上下区域被整体裁掉。
+- 在人物素材后增加贯穿完整任务页高度的中国红径向环境光与红金渐变底层，使顶部、中部和底部属于同一连续场景。
+- 减弱页面顶端与底端的白色覆盖强度，保留输入框和正文可读性的同时消除明显水平断带。
+
+## 2.10.3 — 2026-07-20
+
+- 放大第 4 套普通任务页的五人人物主视觉，将素材宽度由 88% 提升至 116%，并扩大椭圆渐隐高度，使人物与五星红旗从右下局部贴片升级为右侧半屏叙事背景。
+- 提升中国红饱和度、人物对比度和右侧红金环境光，同时保留正文左侧暖白阅读遮罩与底部输入区可读性。
+- 视觉资源通过 2.10.2 引入的热更新机制即时生效，不重启 Codex，也不修改官方 `app.asar`。
+
+## 2.10.2 — 2026-07-20
+
+- 修复常驻注入器长期运行时继续使用旧版内存主题包的问题：CSS、主题清单、素材或本机自定义主题发生变化后，代理会自动重新载入并热应用，不再在页面刷新后回退到旧布局。
+- 重启看门狗新增版本漂移检测：安装目录版本与运行状态不一致时，只刷新后台注入器，不关闭或重启 Codex。
+- 自检新增资源热更新与版本漂移恢复守卫，继续保持 CDP 回环注入且不修改官方 `app.asar`。
+
+## 2.10.1 — 2026-07-19
+
+- 调整第 4 套主页纵向节奏：横幅增高至约 342px，任务卡增高至约 128px，并将横幅、四卡、项目栏和输入区的稳定间距统一到 22–27px，避免模块过度挤在上半屏。
+- 重构第 4 套普通任务页背景过渡：人物原画改为更宽、更低透明度的椭圆渐隐环境层，消除超宽图片上下边界形成的矩形贴片感。
+- 将中国红金主题的任务信息面板、滚动页脚和输入区周边从通用深色玻璃层切换为暖白红金玻璃层，修复顶部黑面板与底部黑块破坏浅色主题一致性的问题。
+- 主页与任务页继续保留原生侧栏、项目选择器、输入框、任务正文和主题切换交互；本轮仍未修改官方 `app.asar`。
+
+## 2.10.0 — 2026-07-19
+
+- 第 4 套“人民 AI · 中国特色科创工作台”主视觉升级为五人构图：新增 Donald Trump 并置于人物组正中 C 位，Sam Altman、Elon Musk、Jensen Huang 与 Dario Amodei 分列两侧；人物画面仍为不代表真实合作或背书的概念编辑视觉。
+- 重排新建任务主页：压缩横幅与任务卡总高度，将四张任务卡改为紧凑横向信息结构，并收紧任务区、项目选择器和输入框之间的垂直节奏。
+- 为普通任务页增加独立背景裁切：不再将超宽人物横幅强制 `cover` 放大，而是在右侧以受控比例展示，叠加上下柔化和左侧高可读遮罩，避免人物压住正文与输入区。
+- 素材登记、槽位断言与版本自检同步更新至 `2.10.0`。
+
+## 2.9.0 — 2026-07-18
+
+- 第 6–9 套更新为《恶搞之家》太空冒险、多元宇宙、庄园悬疑与时间旅行四个非官方粉丝剧情主题，全部使用独立无 UI 超宽海报，不以整张界面截图覆盖 Codex。
+- 新增 `sitcom-cosmos`、`portal-episode`、`mystery-mansion`、`time-machine` 四个布局：横向发射甲板、海报内 2×2 传送门选集、不对称案件证据板和纵向时间线，内置布局从八类扩展到十二类。
+- 四套主题分别提供太空任务、多元宇宙、案件调查和时间线专属任务文案；原生建议卡可用时同步替换标题，缺失时使用可写入真实输入框的四张备用卡。
+- 新增宇宙漂移、传送门能量、庄园雷雨和时间残影四个独立动态特效；海报原画继续保持 `animation: none` 与 `transform: none`。
+- 修复普通任务页在 Codex 26.707 浅色基底下 Markdown/表格文字对比不足的问题，并将底部渐变、用户消息与右侧任务信息面板统一为可读的主题玻璃层；实机验收新增任务前景亮度门槛。
+- 将大体积主题包重注入及主题/路由操作的 CDP 时限提升到 30–120 秒；截图前的鼠标、键盘清理改为非阻断操作，避免繁忙渲染器造成假失败。
+- 扩充槽位顺序、布局白名单、唯一特效映射、素材来源、版本与实机验收要求。
+
+## 2.8.0 — 2026-07-17
+
+- 第 4 套升级为“人民 AI · 中国特色科创工作台”：独立横幅加入规范五星红旗、中国现代化城市，以及 Sam Altman、Elon Musk、Jensen Huang、Dario Amodei 四位人物的概念编辑肖像；主标题更新为“为人民服务的 AI 才是好 AI”，任务卡改为服务人民、自主创新、安全责任和解决一线问题。人物画面不代表任何真实合作或背书。
+- 第 5 套替换为“AI 巨擘 · 黑金圆桌”：使用用户提供的人物主视觉，新增黑金圆桌舞台、嵌入横幅右上方的 2×2 决策模块和战略、算力、产品、风险四类专属提示词。
+- 新增 `china-workbench` 与 `executive-stage` 两个布局家族，内置布局从六类扩展到八类；第 4、5 套不再继承通用电影横幅或编辑画册模板。
+- 新增赤金流光与黑金聚光两套独立动态环境特效；素材原画保持静止，动画只作用于光流、星点、聚光和颗粒层。
+- 主题中心的上传编辑器同步开放八种布局选择；自动化测试新增第 4、5 槽位、布局、素材和版本检查。
+
 ## 2.7.0 — 2026-07-17
 
 - 20 款内置主题各自绑定唯一环境特效：传送门火花、忍者雷暴、轨道扫描、深海气泡、樱花飘落、霓虹雨、星际跃迁、水墨雾、极光、沙尘、冰雪、合成激光、萤火、锻炉余烬、蒸汽齿轮、糖果彩纸、矩阵数字雨、海岸闪光、月夜流星与银色颗粒。

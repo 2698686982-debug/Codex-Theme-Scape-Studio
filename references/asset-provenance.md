@@ -4,7 +4,7 @@
 
 - File: `assets/themes.json`
 - Count: 20 ordered presets; slot 1 is the portal fan theme and slot 2 is the Naruto fan theme.
-- Art method: slot 1 uses the generated bitmap documented below. Slot 2 uses the user-supplied Naruto master crop documented below. Slot 3 uses the user-approved classic mecha master crop documented below. Slots 4–20 use original lightweight SVG scenes generated locally by `scripts/injector.mjs` from color, symbol, and motif metadata.
+- Art method: slot 1 uses the generated bitmap documented below. Slot 2 uses the user-supplied Naruto master crop documented below. Slot 3 uses the user-approved classic mecha master crop documented below. Slot 4 uses the generated red-gold hero documented below. Slot 5 uses the user-supplied executive roundtable image documented below. Slots 6–9 use four generated Family Guy fan-theme posters documented below. Slots 10–20 use original lightweight SVG scenes generated locally by `scripts/injector.mjs` from color, symbol, and motif metadata.
 - Rights note: theme names that reference third-party franchises are unofficial fan labels. Software licensing does not grant franchise, character, trademark, or commercial merchandising rights. Replace or license those labels/assets as appropriate before commercial redistribution.
 
 ## Portal hero bitmap
@@ -52,3 +52,38 @@ Avoid: busy high-contrast details in the left negative-space area, fake interfac
 - Removed content: the `WORKBUDDY` brand block, left navigation, hero marketing copy, call-to-action, bottom feature cards, and most of the source's fake interface chrome.
 - Purpose: independent hero/task wallpaper for built-in slot 3. Native Codex sidebar, cards, project selector, task content, composer, and theme switcher remain live DOM.
 - Rights note: This is recognizable user-supplied franchise fan artwork. Inclusion in the project does not grant copyright, character, trademark, or commercial redistribution rights; the customer must license or replace it before commercial distribution.
+
+## Red-gold China technology artwork
+
+- File: `assets/china-red-gold-hero-v2.png`
+- SHA-256: `a9dcea47568ffcfc65580e54e169714d8d71934a63350ae74dd82cb0e375c64d`
+- Created: 2026-07-19 with OpenAI's built-in image generation tool for this project, using the prior generated red-gold city composition as a visual reference.
+- Included content: warm ivory Shanghai-inspired skyline, Chinese civic architecture, high-speed rail, red silk energy, gold data light, a correctly constructed five-star Chinese national flag, and conceptual editorial portraits ordered left-to-right as Sam Altman, Elon Musk, Donald Trump, Jensen Huang, and Dario Amodei. Donald Trump occupies the visual center, is slightly larger, and stands slightly forward of the other four figures.
+- Excluded content: text, logos, buttons, sidebar, cards, progress panel and all fake interface chrome.
+- Purpose: independent hero/task wallpaper for built-in slot 4. All Codex controls remain live DOM.
+- Rights note: Generated artwork does not grant likeness, publicity, personality, trademark, political-advertising, image, or commercial redistribution rights. The composition is an unofficial conceptual editorial visual; it does not represent support, collaboration, approval, quotation, or endorsement by the depicted people, their companies, OpenAI, Anthropic, NVIDIA, xAI, Tesla, any government, or any public institution. Confirm all required rights or replace the artwork before public or commercial distribution.
+
+### Generation brief
+
+```text
+Create a 2048×768 ultra-wide red-and-gold conceptual editorial hero for a live Codex desktop theme. Keep the left roughly 45% calm and bright for native HTML title copy. On the right, arrange recognizable conceptual portraits left-to-right as Sam Altman, Elon Musk, Donald Trump, Jensen Huang, and Dario Amodei; place Donald Trump in the exact visual center, slightly larger and slightly forward. Include a correctly constructed five-star Chinese flag, Shanghai skyline, Chinese civic architecture, high-speed rail, red silk and gold circuit light. Produce artwork only: no text, logo, UI, buttons or watermark. This is an unofficial conceptual editorial composition and must not imply endorsement or real collaboration.
+```
+
+## AI executive roundtable artwork
+
+- File: `assets/executive-ai-roundtable.png`
+- Source: user-supplied visual master `445745b46c58d91106606e806009c038.png`.
+- SHA-256: `054e5d76806dc523f52647688fafb883b5d2e8e3718ad95e1a150d4aa8db04e0`
+- Purpose: independent hero/task wallpaper for built-in slot 5. All task cards, project controls, composer and theme switcher remain live DOM.
+- Rights note: The image appears to depict recognizable public figures. Inclusion in the software does not grant copyright, publicity, personality, trademark, endorsement or commercial redistribution rights. The distributor must obtain permission or replace the image before public or commercial distribution.
+
+## Family episode fan-theme artwork
+
+The following four image-only ultra-wide posters were created on 2026-07-18 with OpenAI's built-in image generation tool for this project. They contain no interface controls, text, logos or watermark and are used only as fixed home/task wallpaper behind live Codex DOM.
+
+- `assets/family-cosmic-hero.png` — 2060×763 — SHA-256 `eff2c3574d16c734bf714c2c4f245437a200afc1b01d2d39035701dbb633f5e8` — space-adventure ensemble with calm left-side copy area.
+- `assets/family-multiverse-hero.png` — 2061×763 — SHA-256 `5ed7060ed7fba040a9d9f50a0ec71cded3aa2327e609b51e53cef19cc3ff57ff` — multiple stylized portal worlds with calm left-side copy area.
+- `assets/family-mystery-hero.png` — 2060×763 — SHA-256 `8afedab2447108dcb6735b962028fb242e9ab76565fdd0b0ffc8b91c4549a5e2` — stormy manor dinner mystery.
+- `assets/family-time-hero.png` — 2061×763 — SHA-256 `fe51bcc9d83248aa002ee3975aaa8980a4dfb6da0ce24edab03e8df5b6caa3f7` — time machine and three era portals with calm left-side copy area.
+
+Rights note: These are recognizable unofficial fan-theme depictions of third-party characters. Image generation and inclusion in the repository do not grant copyright, character, trademark, merchandising, publicity or commercial redistribution rights. Replace them with original or properly licensed artwork before commercial distribution, and retain an unofficial-project disclaimer for any public fan release.

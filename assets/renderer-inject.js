@@ -21,15 +21,24 @@
     ["immersive-board", "沉浸任务板"],
     ["terminal-grid", "控制台网格"],
     ["orbital-command", "轨道指挥中心"],
+    ["china-workbench", "人民 AI 科创工作台"],
+    ["executive-stage", "黑金圆桌舞台"],
+    ["sitcom-cosmos", "太空家庭剧场"],
+    ["portal-episode", "多元宇宙选集"],
+    ["mystery-mansion", "庄园悬疑案板"],
+    ["time-machine", "时间机器工坊"],
     ["editorial-split", "编辑画册"],
     ["minimal-focus", "极简聚焦"],
   ];
   const LAYOUT_IDS = new Set(LAYOUT_OPTIONS.map(([id]) => id));
   const EFFECT_TYPES = new Set([
-    "portal-sparks", "ninja-storm", "orbital-scan", "abyss-bubbles", "sakura-petals",
-    "neon-rain", "star-warp", "ink-mist", "aurora-ribbons", "dune-dust",
+    "portal-sparks", "ninja-storm", "orbital-scan", "red-gold-stream", "executive-spotlight",
+    "family-cosmic-drift", "family-portals", "family-storm", "family-timewarp", "dune-dust",
     "glacier-snow", "synth-lasers", "forest-fireflies", "forge-embers", "steam-cogs",
     "candy-confetti", "matrix-rain", "coast-glitter", "moon-meteors", "silver-grain",
+  ]);
+  const EPISODE_THEME_IDS = new Set([
+    "family-cosmic", "family-multiverse", "family-mystery", "family-time-travel",
   ]);
   const THEME_VARIABLES = [
     "--ds-bg", "--ds-panel", "--ds-panel-2", "--ds-green", "--ds-lime",
@@ -92,8 +101,10 @@
   const builtinThemes = themes.filter((theme) => theme.source === "builtin");
   const customThemes = themes.filter((theme) => theme.source === "custom");
   if (BUILTIN_COUNT !== 20 || builtinThemes.length !== 20 ||
-      builtinThemes[1]?.id !== "naruto" || builtinThemes[2]?.id !== "gundam-orbital") {
-    throw new Error("Codex Dream Skin requires 20 built-in themes with Naruto in slot 2 and Gundam in slot 3.");
+      builtinThemes[1]?.id !== "naruto" || builtinThemes[2]?.id !== "gundam-orbital" ||
+      builtinThemes[5]?.id !== "family-cosmic" || builtinThemes[6]?.id !== "family-multiverse" ||
+      builtinThemes[7]?.id !== "family-mystery" || builtinThemes[8]?.id !== "family-time-travel") {
+    throw new Error("Codex Dream Skin requires 20 built-ins with core slots 1–3 and Family episode slots 6–9 preserved.");
   }
 
   const safeStorageGet = (key) => {
@@ -151,10 +162,10 @@
     if (hue < 24 || hue >= 345) return "forge-embers";
     if (hue < 58) return "dune-dust";
     if (hue < 150) return "forest-fireflies";
-    if (hue < 195) return "abyss-bubbles";
+    if (hue < 195) return "red-gold-stream";
     if (hue < 235) return "coast-glitter";
-    if (hue < 285) return "aurora-ribbons";
-    return theme?.layoutVariant === "editorial-split" ? "sakura-petals" : "moon-meteors";
+    if (hue < 285) return "family-portals";
+    return theme?.layoutVariant === "editorial-split" ? "executive-spotlight" : "moon-meteors";
   };
   const DEFAULT_ACTIONS = [
     { icon: "</>", title: "探索并理解代码", hint: "洞察逻辑，梳理关键结构", prompt: "请探索并解释当前项目的代码结构、关键模块与运行方式。" },
@@ -174,6 +185,50 @@
     { icon: "03", title: "管理项目舰队", hint: "PROJECT FLEET", prompt: "请梳理当前项目结构、依赖、任务状态与下一步优先级。" },
     { icon: "04", title: "启动自动化引擎", hint: "AUTOMATION CORE", prompt: "请识别当前流程中适合自动化的环节，完成实现并验证运行结果。" },
   ];
+  const CHINA_ACTIONS = [
+    { icon: "☭", title: "服务人民真实需求", hint: "深入场景，回应实际需要", prompt: "请从人民群众和一线用户的真实需求出发，梳理当前项目要解决的问题、服务对象、实施步骤与验收标准。" },
+    { icon: "☭", title: "建设自主创新项目", hint: "自立自强，形成核心能力", prompt: "请规划并建设当前项目，优先形成安全、可靠、可持续演进的自主核心能力，明确里程碑、依赖和交付标准。" },
+    { icon: "☭", title: "审查安全与责任", hint: "科技向善，守住责任边界", prompt: "请审查当前项目的安全、隐私、公平、可靠性和社会责任风险，提出可执行的改进并完成必要验证。" },
+    { icon: "☭", title: "解决一线实际问题", hint: "求真务实，交付可用结果", prompt: "请定位当前一线场景中的实际问题，找出根因，完成可落地的解决方案、回归验证和使用说明。" },
+  ];
+  const EXECUTIVE_ACTIONS = [
+    { icon: "01", title: "战略架构评审", hint: "ARCHITECTURE REVIEW", prompt: "请从长期战略、系统架构和可扩展性角度评审当前项目，给出明确取舍与下一步。" },
+    { icon: "02", title: "模型与算力规划", hint: "MODEL & COMPUTE", prompt: "请分析当前项目的模型、算力、延迟和成本需求，提出可落地的技术方案。" },
+    { icon: "03", title: "产品路线共创", hint: "PRODUCT ROADMAP", prompt: "请把当前目标整理为产品路线图，明确用户价值、优先级、里程碑和验证指标。" },
+    { icon: "04", title: "风险与落地决策", hint: "RISK & EXECUTION", prompt: "请识别当前方案的关键风险、依赖与执行障碍，并形成可立即行动的决策清单。" },
+  ];
+  const FAMILY_COSMIC_ACTIONS = [
+    { icon: "01", title: "扫描未知星域", hint: "SPACE CODE SCAN", prompt: "请像执行深空扫描一样探索当前项目，梳理代码结构、关键模块、依赖关系和潜在风险。" },
+    { icon: "02", title: "启动家庭飞船", hint: "LAUNCH A FEATURE", prompt: "请把当前想法实现为一个可运行的新功能，明确任务步骤并完成必要验证。" },
+    { icon: "03", title: "校准航行系统", hint: "REVIEW THE SYSTEM", prompt: "请审查当前项目的代码质量、可靠性和可维护性，给出优先级清晰的改进方案。" },
+    { icon: "04", title: "修复太空故障", hint: "REPAIR IN ORBIT", prompt: "请定位当前问题的根因，完成修复、回归测试和简明交付说明。" },
+  ];
+  const FAMILY_MULTIVERSE_ACTIONS = [
+    { icon: "A", title: "侦察积木宇宙", hint: "EXPLORE A WORLD", prompt: "请探索当前项目，画出核心结构与数据流，并指出最值得先理解的模块。" },
+    { icon: "B", title: "进入童话宇宙", hint: "BUILD A STORY", prompt: "请把当前需求拆成清晰的用户故事，并完成优先级最高功能的实现与验证。" },
+    { icon: "C", title: "审查黑白宇宙", hint: "REVIEW THE CUT", prompt: "请从代码审查视角检查当前项目，找出缺陷、边界条件和可维护性问题。" },
+    { icon: "D", title: "突入霓虹宇宙", hint: "FIX THE TIMELINE", prompt: "请诊断当前故障，比较可行解法，实施风险最低的修复并验证结果。" },
+  ];
+  const FAMILY_MYSTERY_ACTIONS = [
+    { icon: "Ⅰ", title: "勘察暴风现场", hint: "INSPECT THE SCENE", prompt: "请勘察当前项目现场，梳理异常现象、关键代码路径、日志证据与复现条件。" },
+    { icon: "Ⅱ", title: "整理庄园证据", hint: "CONNECT THE CLUES", prompt: "请整理当前需求和技术线索，形成可执行方案、依赖清单与验收条件。" },
+    { icon: "Ⅲ", title: "审问可疑逻辑", hint: "QUESTION THE CODE", prompt: "请严格审查当前代码逻辑，找出隐蔽缺陷、错误假设和高风险边界。" },
+    { icon: "Ⅳ", title: "锁定 Bug 真凶", hint: "CLOSE THE CASE", prompt: "请根据证据定位 Bug 根因，完成修复、回归验证并总结案件结论。" },
+  ];
+  const FAMILY_TIME_ACTIONS = [
+    { icon: "PAST", title: "回溯旧版时间线", hint: "TRACE THE HISTORY", prompt: "请回溯当前项目的实现脉络，梳理现状、关键变更、技术债与兼容性约束。" },
+    { icon: "NOW", title: "推进当前迭代", hint: "BUILD IT NOW", prompt: "请围绕当前目标完成一项可立即交付的功能，控制范围并完成验证。" },
+    { icon: "NEXT", title: "预演未来架构", hint: "PREVIEW THE FUTURE", prompt: "请评审当前架构并预演未来扩展需求，给出兼顾演进成本的设计建议。" },
+    { icon: "FIX", title: "修复分裂时间线", hint: "RESTORE CONTINUITY", prompt: "请诊断当前问题，修复导致时间线分裂的根因，并完成兼容性与回归检查。" },
+  ];
+  const actionsForTheme = (themeId) => themeId === "naruto" ? NARUTO_ACTIONS
+    : themeId === "gundam-orbital" ? MECHA_ACTIONS
+      : themeId === "china-red-gold" ? CHINA_ACTIONS
+        : themeId === "ai-executive-forum" ? EXECUTIVE_ACTIONS
+          : themeId === "family-cosmic" ? FAMILY_COSMIC_ACTIONS
+            : themeId === "family-multiverse" ? FAMILY_MULTIVERSE_ACTIONS
+              : themeId === "family-mystery" ? FAMILY_MYSTERY_ACTIONS
+                : themeId === "family-time-travel" ? FAMILY_TIME_ACTIONS : DEFAULT_ACTIONS;
   const rgbTriplet = (value, fallback) => {
     const match = /^#([0-9a-f]{6})$/i.exec(value || "");
     if (!match) return fallback;
@@ -492,8 +547,7 @@
     chrome.querySelector(".dream-skin-hero-copy h2 span").textContent = activeTheme.heroTitle || "";
     chrome.querySelector(".dream-skin-hero-copy h2 b").textContent = activeTheme.heroEmphasis || "";
     chrome.querySelector(".dream-skin-hero-copy p").textContent = activeTheme.heroDescription || "";
-    const actions = activeTheme.id === "naruto" ? NARUTO_ACTIONS
-      : activeTheme.id === "gundam-orbital" ? MECHA_ACTIONS : DEFAULT_ACTIONS;
+    const actions = actionsForTheme(activeTheme.id);
     chrome.querySelectorAll(".dream-skin-fallback-actions button").forEach((button, index) => {
       const action = actions[index] || DEFAULT_ACTIONS[index];
       button.querySelector("i").textContent = action.icon;
@@ -522,6 +576,32 @@
       editor.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: prompt }));
     }
     return true;
+  };
+
+  const clearNativeActionPresentation = () => {
+    document.querySelectorAll("[data-dream-action-title]").forEach((label) => {
+      delete label.dataset.dreamActionTitle;
+    });
+    document.querySelectorAll("[data-dream-action-prompt]").forEach((button) => {
+      delete button.dataset.dreamActionPrompt;
+      delete button.dataset.dreamActionHint;
+    });
+  };
+
+  const syncNativeActions = (home) => {
+    clearNativeActionPresentation();
+    if (!home || !["naruto", "gundam-orbital", "china-red-gold", "ai-executive-forum",
+      "family-cosmic", "family-multiverse", "family-mystery", "family-time-travel"].includes(activeTheme.id)) return;
+    const actions = actionsForTheme(activeTheme.id);
+    home.querySelectorAll('.group\\/home-suggestions button').forEach((button, index) => {
+      const action = actions[index];
+      const label = button.querySelector(":scope > span:last-child");
+      if (!action || !label) return;
+      label.dataset.dreamActionTitle = action.title;
+      button.dataset.dreamActionPrompt = action.prompt;
+      button.dataset.dreamActionHint = action.hint;
+      button.setAttribute("aria-label", `${action.title}：${action.hint}`);
+    });
   };
 
   const updatePicker = () => {
@@ -582,7 +662,14 @@
       state.motionProfile = next.source === "system" ? null : motionProfileForTheme(next);
       state.effectType = next.source === "system" ? null : effectProfileForTheme(next);
     }
-    if (next.source !== "system") requestAnimationFrame(() => ensure());
+    if (next.source !== "system") requestAnimationFrame(() => {
+      const home = document.querySelector('[role="main"].dream-skin-home');
+      for (let node = home; node; node = node.parentElement) {
+        if (node.scrollTop) node.scrollTop = 0;
+        if (node.scrollLeft) node.scrollLeft = 0;
+      }
+      ensure();
+    });
     return true;
   };
 
@@ -890,6 +977,7 @@
 
     const shellMain = document.querySelector("main.main-surface") || document.querySelector("main");
     if (activeTheme.source === "system") {
+      clearNativeActionPresentation();
       clearSkinSurface();
       if (!shellMain || !document.body) return;
       const shellBox = shellMain.getBoundingClientRect();
@@ -906,7 +994,7 @@
     const home = homeIndicator?.closest('[role="main"]') ||
       [...document.querySelectorAll('[role="main"]')].find((candidate) =>
         candidate.querySelector('[data-feature="game-source"]') &&
-        candidate.querySelector('.group\\/home-suggestions')) || null;
+        candidate.querySelector('.composer-surface-chrome')) || null;
     for (const candidate of document.querySelectorAll('[role="main"].dream-skin-home')) {
       if (candidate !== home) candidate.classList.remove("dream-skin-home");
     }
@@ -956,7 +1044,9 @@
     chrome.classList.toggle("dream-skin-home-shell", Boolean(home));
     const nativeSuggestions = home?.querySelector('.group\\/home-suggestions');
     const nativeSuggestionCount = nativeSuggestions?.querySelectorAll("button").length ?? 0;
-    chrome.classList.toggle("dream-skin-fallback-actions-visible", Boolean(home && nativeSuggestionCount < 2));
+    syncNativeActions(home);
+    const forceThemeDeck = EPISODE_THEME_IDS.has(activeTheme.id) || activeTheme.id === "china-red-gold";
+    chrome.classList.toggle("dream-skin-fallback-actions-visible", Boolean(home && (forceThemeDeck || nativeSuggestionCount < 2)));
 
     const picker = ensurePicker();
     picker.style.top = `${Math.max(7, Math.round(shellBox.top + 7))}px`;
@@ -970,14 +1060,24 @@
   const documentKeyHandler = (event) => {
     if (event.key === "Escape") closePicker();
   };
+  const documentActionHandler = (event) => {
+    const button = event.target.closest?.('button[data-dream-action-prompt]');
+    if (!button || !document.querySelector('[role="main"].dream-skin-home')?.contains(button)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    insertActionPrompt(button.dataset.dreamActionPrompt || "");
+  };
   document.addEventListener("pointerdown", documentPointerHandler, true);
   document.addEventListener("keydown", documentKeyHandler, true);
+  document.addEventListener("click", documentActionHandler, true);
 
   const cleanup = () => {
     disposed = true;
     window[DISABLED_KEY] = true;
     document.removeEventListener("pointerdown", documentPointerHandler, true);
     document.removeEventListener("keydown", documentKeyHandler, true);
+    document.removeEventListener("click", documentActionHandler, true);
+    clearNativeActionPresentation();
     document.documentElement?.classList.remove("codex-dream-skin");
     delete document.documentElement?.dataset.dreamSkinTheme;
     delete document.documentElement?.dataset.dreamSkinLayout;

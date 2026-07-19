@@ -49,7 +49,13 @@ while true; do
   if verified_cdp_endpoint "$PORT"; then
     last_pid="$codex_pid"
     unwrapped_checks=0
-    if ! recorded_injector_is_running; then
+    expected_version="$(/usr/bin/tr -d '[:space:]' < "$PROJECT_ROOT/VERSION" 2>/dev/null || true)"
+    saved_version="$(state_field skinVersion 2>/dev/null || true)"
+    if recorded_injector_is_running && [ -n "$expected_version" ] && [ "$saved_version" != "$expected_version" ]; then
+      printf '%s detected Dream Skin version change (%s -> %s); refreshing injector without restarting Codex\n' \
+        "$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')" "${saved_version:-unknown}" "$expected_version"
+      "$SCRIPT_DIR/start-dream-skin-macos.sh" --port "$PORT" >> "$WATCHDOG_LOG" 2>> "$WATCHDOG_ERROR_LOG" || true
+    elif ! recorded_injector_is_running; then
       if [ -f "$STATE_PATH" ]; then
         saved_pid="$(state_field injectorPid 2>/dev/null || true)"
         case "$saved_pid" in
